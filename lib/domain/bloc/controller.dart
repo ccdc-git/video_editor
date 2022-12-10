@@ -1,21 +1,15 @@
 import 'dart:io';
+
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/return_code.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
-import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/file_format.dart';
 import 'package:video_editor/domain/helpers.dart';
 import 'package:video_editor/domain/thumbnails.dart';
 import 'package:video_player/video_player.dart';
-import 'package:path_provider/path_provider.dart';
-
-import 'package:video_editor/domain/entities/crop_style.dart';
-import 'package:video_editor/domain/entities/trim_style.dart';
-import 'package:video_editor/domain/entities/cover_style.dart';
-import 'package:video_editor/domain/entities/cover_data.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class VideoMinDurationError extends Error {
@@ -563,25 +557,36 @@ class VideoEditorController extends ChangeNotifier {
     VideoExportFormat format = VideoExportFormat.mp4,
     double scale = 1.0,
     String? customInstruction,
+    String? customCommand,
+    String? outputPath,
     void Function(Statistics, double)? onProgress,
     VideoExportPreset preset = VideoExportPreset.none,
     bool isFiltersEnabled = true,
   }) async {
-    final String videoPath = file.path;
-    final String outputPath = await _getOutputPath(
-      filePath: videoPath,
-      name: name,
-      outputDirectory: outDir,
-      format: format,
-    );
-    final String filter = _getExportFilters(
-      videoFormat: format,
-      scale: scale,
-      isFiltersEnabled: isFiltersEnabled,
-    );
-    final String execute =
-        // ignore: unnecessary_string_escapes
-        " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $_trimCmd -y \"$outputPath\"";
+    if (customCommand != null && outputPath == null) {
+      throw 'outputPath must be set if customCommand is set';
+    }
+
+    late String execute;
+    if (customCommand == null) {
+      final String videoPath = file.path;
+      outputPath = await _getOutputPath(
+        filePath: videoPath,
+        name: name,
+        outputDirectory: outDir,
+        format: format,
+      );
+      final String filter = _getExportFilters(
+        videoFormat: format,
+        scale: scale,
+        isFiltersEnabled: isFiltersEnabled,
+      );
+      execute =
+          // ignore: unnecessary_string_escapes
+          " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $_trimCmd -y \"$outputPath\"";
+    } else {
+      execute = customCommand;
+    }
 
     debugPrint('VideoEditor - run export video command : [$execute]');
 
@@ -594,7 +599,7 @@ class VideoEditorController extends ChangeNotifier {
         final code = await session.getReturnCode();
 
         if (ReturnCode.isSuccess(code)) {
-          onCompleted(File(outputPath));
+          onCompleted(File(outputPath!));
         } else {
           if (onError != null) {
             onError(
