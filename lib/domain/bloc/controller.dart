@@ -552,6 +552,7 @@ class VideoEditorController extends ChangeNotifier {
   Future<int> exportVideo({
     required void Function(File file) onCompleted,
     void Function(Object, StackTrace)? onError,
+    void Function()? onCancel,
     String? name,
     String? outDir,
     VideoExportFormat format = VideoExportFormat.mp4,
@@ -600,6 +601,8 @@ class VideoEditorController extends ChangeNotifier {
 
         if (ReturnCode.isSuccess(code)) {
           onCompleted(File(outputPath!));
+        } else if (ReturnCode.isCancel(code)) {
+          onCancel?.call();
         } else {
           if (onError != null) {
             onError(
