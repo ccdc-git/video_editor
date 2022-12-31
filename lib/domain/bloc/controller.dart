@@ -626,6 +626,10 @@ class VideoEditorController extends ChangeNotifier {
     return sessionId!;
   }
 
+  Future<void> cancelExport(int sessionId) async {
+    await FFmpegKit.cancel(sessionId);
+  }
+
   /// Convert [VideoExportPreset] to ffmpeg preset as a [String], [More info about presets](https://trac.ffmpeg.org/wiki/Encode/H.264)
   ///
   /// Return [String] in `-preset xxx` format
