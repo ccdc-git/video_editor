@@ -549,7 +549,7 @@ class VideoEditorController extends ChangeNotifier {
   /// [More info about presets](https://trac.ffmpeg.org/wiki/Encode/H.264)
   ///
   /// Set [isFiltersEnabled] to `false` if you do not want to apply any changes
-  Future<void> exportVideo({
+  Future<int> exportVideo({
     required void Function(File file) onCompleted,
     void Function(Object, StackTrace)? onError,
     String? name,
@@ -591,7 +591,7 @@ class VideoEditorController extends ChangeNotifier {
     debugPrint('VideoEditor - run export video command : [$execute]');
 
     // PROGRESS CALLBACKS
-    FFmpegKit.executeAsync(
+    final session = await FFmpegKit.executeAsync(
       execute,
       (session) async {
         final state =
@@ -621,6 +621,9 @@ class VideoEditorController extends ChangeNotifier {
             }
           : null,
     );
+
+    final sessionId = session.getSessionId();
+    return sessionId!;
   }
 
   /// Convert [VideoExportPreset] to ffmpeg preset as a [String], [More info about presets](https://trac.ffmpeg.org/wiki/Encode/H.264)
