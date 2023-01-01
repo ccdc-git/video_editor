@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
@@ -589,6 +590,12 @@ class VideoEditorController extends ChangeNotifier {
       execute = customCommand;
     }
 
+    final probeSession = await FFprobeKit.execute(
+        '-v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 -print_format default=nokey=1:noprint_wrappers=1 ${file.path}');
+
+    final totalFrames = int.parse((await probeSession.getOutput())!);
+    log('VideoEditor - probe output: $totalFrames');
+
     debugPrint('VideoEditor - run export video command : [$execute]');
 
     // PROGRESS CALLBACKS
@@ -618,8 +625,8 @@ class VideoEditorController extends ChangeNotifier {
       onProgress != null
           ? (stats) {
               // Progress value of encoded video
-              double progressValue =
-                  stats.getTime() / trimmedDuration.inMilliseconds;
+              int curFrameNumber = stats.getVideoFrameNumber();
+              double progressValue = curFrameNumber / totalFrames;
               onProgress(stats, progressValue.clamp(0.0, 1.0));
             }
           : null,
