@@ -597,7 +597,7 @@ class VideoEditorController extends ChangeNotifier {
     }
 
     final probeSession = await FFprobeKit.execute(
-        '-v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 -print_format default=nokey=1:noprint_wrappers=1 ${file.path}');
+        '-v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 -print_format default=nokey=1:noprint_wrappers=1 "${file.path}"');
 
     final totalFrames = int.parse((await probeSession.getOutput())!);
     log('VideoEditor - probe output: $totalFrames');
